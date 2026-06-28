@@ -1,0 +1,14 @@
+month,town,flat_type,storey_range,floor_area_sqm,flat_model,lease_commence_date,remaining_lease,resale_price
+2023-01,ANG MO KIO,4 ROOM,07 TO 09,92,Improved,1979,55 years 07 months,450000
+2023-01,TAMPINES,5 ROOM,10 TO 12,122,Improved,1988,64 years 02 months,680000
+2023-01,TAMPINES,4 ROOM,07 TO 09,93,Improved,1990,66 years 05 months,520000
+2023-02,BEDOK,4 ROOM,04 TO 06,90,New Generation,1982,58 years 01 months,460000
+2023-02,JURONG WEST,5 ROOM,13 TO 15,121,Improved,1995,71 years 03 months,610000
+2023-03,WOODLANDS,4 ROOM,10 TO 12,91,Simplified,1986,62 years 08 months,430000
+2023-03,SENGKANG,5 ROOM,13 TO 15,118,Premium Apartment,2002,78 years 04 months,720000
+2023-04,PUNGGOL,5 ROOM,10 TO 12,117,Premium Apartment,2010,86 years 05 months,780000
+2023-04,BISHAN,4 ROOM,13 TO 15,90,Improved,1987,63 years 07 months,650000
+2022-01,ANG MO KIO,4 ROOM,07 TO 09,92,Improved,1979,56 years 07 months,420000
+2022-01,TAMPINES,5 ROOM,10 TO 12,122,Improved,1988,65 years 02 months,640000
+2021-01,ANG MO KIO,4 ROOM,07 TO 09,92,Improved,1979,57 years 07 months,390000
+2021-06,TAMPINES,5 ROOM,10 TO 12,122,Improved,1988,66 years 02 months,580000
