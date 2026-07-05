@@ -54,6 +54,12 @@ def search(records, town=None, flat_type=None, year=None):
         results.append(record)
 
     return results
+def count_by_town(records, town):
+    count = 0
+    for record in records:
+        if town == record['town']:
+            count += 1
+    return count
 
 
 # ──────────────────────────────────────────────
@@ -191,6 +197,7 @@ def main():
     data_file = "data/sample_hdb.csv"
 
     records = load_data(data_file)
+    print(count_by_town(records, "TAMPINES"))
     if not records:
         return
 

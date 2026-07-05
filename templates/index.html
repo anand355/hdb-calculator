@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HDB Resale Price Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:        #C0392B;
+      --red-dark:   #922B21;
+      --red-light:  #F9EBEA;
+      --navy:       #1A1F36;
+      --navy-mid:   #2D3561;
+      --text:       #1A1F36;
+      --text-muted: #6B7280;
+      --border:     #E5E7EB;
+      --bg:         #F7F8FC;
+      --white:      #FFFFFF;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-lg:  0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+      --radius:     12px;
+      --radius-sm:  8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #3D1E28 100%);
+      color: white;
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .header-inner {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 36px 24px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .header-icon {
+      width: 52px; height: 52px;
+      background: rgba(192,57,43,0.85);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .header-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header-text p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      margin-top: 4px;
+    }
+    .header-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── SEARCH FORM ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 14px;
+      align-items: end;
+    }
+    @media (max-width: 680px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid .btn-col { grid-column: span 2; }
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--white);
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+    }
+    select:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+
+    .btn {
+      padding: 10px 22px;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 2px 6px rgba(192,57,43,0.35);
+      display: flex; align-items: center; gap: 7px;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn:hover { background: var(--red-dark); box-shadow: 0 4px 12px rgba(192,57,43,0.4); }
+    .btn:active { transform: translateY(1px); }
+    .btn svg { flex-shrink: 0; }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--red);
+      opacity: 0.7;
+    }
+    .stat-card:nth-child(1)::before { background: #3B82F6; }
+    .stat-card:nth-child(2)::before { background: var(--red); }
+    .stat-card:nth-child(3)::before { background: #10B981; }
+    .stat-card:nth-child(4)::before { background: #F59E0B; }
+
+    .stat-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .stat-card:nth-child(1) .stat-icon { background: #EFF6FF; }
+    .stat-card:nth-child(2) .stat-icon { background: var(--red-light); }
+    .stat-card:nth-child(3) .stat-icon { background: #ECFDF5; }
+    .stat-card:nth-child(4) .stat-icon { background: #FFFBEB; }
+
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 3px; letter-spacing: -0.5px; }
+    .stat-card:nth-child(2) .stat-value { color: var(--red); }
+
+    /* ── TABLE ── */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .results-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+    thead tr { border-bottom: 2px solid var(--border); }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; color: var(--text); vertical-align: middle; }
+    tbody tr { transition: background 0.12s; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #F9FAFB; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--bg);
+      color: var(--text-muted);
+    }
+    .badge-type {
+      background: #EFF6FF;
+      color: #2563EB;
+    }
+    .price-cell {
+      font-weight: 700;
+      color: var(--red);
+      font-size: 13.5px;
+    }
+    .storey-cell { color: var(--text-muted); }
+    .area-cell {
+      font-weight: 500;
+    }
+
+    /* ── TREND CHART ── */
+    .chart-container { position: relative; height: 220px; }
+
+    /* ── EMPTY / LOADING STATES ── */
+    .state-empty {
+      text-align: center;
+      padding: 52px 20px;
+      color: var(--text-muted);
+    }
+    .state-empty .icon { font-size: 40px; margin-bottom: 12px; }
+    .state-empty h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .state-empty p { font-size: 13px; }
+
+    .state-loading {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FADE IN ── */
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .hidden { display: none !important; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-icon">🏠</div>
+    <div class="header-text">
+      <h1>HDB Resale Price Calculator</h1>
+      <p>Search real Singapore resale flat transactions</p>
+    </div>
+    <div class="header-badge">SG Data</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Search -->
+  <div class="card">
+    <div class="card-title">Search Transactions</div>
+    <div class="form-grid">
+      <div>
+        <label for="town">Town</label>
+        <select id="town">
+          <option value="">All towns</option>
+        </select>
+      </div>
+      <div>
+        <label for="flat_type">Flat Type</label>
+        <select id="flat_type">
+          <option value="">All types</option>
+        </select>
+      </div>
+      <div>
+        <label for="year">Year</label>
+        <input type="text" id="year" placeholder="e.g. 2023" maxlength="4">
+      </div>
+      <div class="btn-col">
+        <label style="visibility:hidden">Go</label>
+        <button class="btn" onclick="doSearch()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid hidden" id="stats-section">
+    <div class="stat-card fade-in">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">Results</div>
+      <div class="stat-value" id="stat-count">—</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Average Price</div>
+      <div class="stat-value" id="stat-avg">—</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-icon">📉</div>
+      <div class="stat-label">Lowest</div>
+      <div class="stat-value" id="stat-min">—</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-icon">📈</div>
+      <div class="stat-label">Highest</div>
+      <div class="stat-value" id="stat-max">—</div>
+    </div>
+  </div>
+
+  <!-- Trend Chart -->
+  <div class="card hidden" id="chart-card">
+    <div class="card-title">Price Trend (Average by Year)</div>
+    <div class="chart-container">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="card" id="results-card">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Transaction Results</div>
+      <div class="results-count hidden" id="results-count-badge"></div>
+    </div>
+    <div id="results-body">
+      <div class="state-empty">
+        <div class="icon">🔍</div>
+        <h3>No search yet</h3>
+        <p>Select your filters above and hit Search to view transactions.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Data sourced from Singapore HDB resale flat transactions &nbsp;·&nbsp; Built for research purposes</footer>
+
+<script>
+  let trendChartInstance = null;
+
+  window.onload = async function () {
+    const [towns, flatTypes] = await Promise.all([
+      fetch("/api/towns").then(r => r.json()),
+      fetch("/api/flat_types").then(r => r.json())
+    ]);
+
+    const townSel = document.getElementById("town");
+    towns.forEach(t => {
+      const o = document.createElement("option");
+      o.value = t; o.textContent = t;
+      townSel.appendChild(o);
+    });
+
+    const typeSel = document.getElementById("flat_type");
+    flatTypes.forEach(t => {
+      const o = document.createElement("option");
+      o.value = t; o.textContent = t;
+      typeSel.appendChild(o);
+    });
+
+    document.getElementById("year").addEventListener("keydown", e => {
+      if (e.key === "Enter") doSearch();
+    });
+  };
+
+  function fmt(n) {
+    if (n >= 1_000_000) return "S$" + (n / 1_000_000).toFixed(2) + "M";
+    if (n >= 1_000)     return "S$" + n.toLocaleString();
+    return "S$" + n;
+  }
+
+  function fmtShort(n) {
+    if (n >= 1_000_000) return "S$" + (n / 1_000_000).toFixed(2) + "M";
+    if (n >= 1_000)     return "S$" + (n / 1_000).toFixed(0) + "K";
+    return "S$" + n;
+  }
+
+  async function doSearch() {
+    const town      = document.getElementById("town").value;
+    const flat_type = document.getElementById("flat_type").value;
+    const year      = document.getElementById("year").value.trim();
+
+    const body = document.getElementById("results-body");
+    body.innerHTML = '<div class="state-loading"><div class="spinner"></div> Loading results…</div>';
+    document.getElementById("stats-section").classList.add("hidden");
+    document.getElementById("chart-card").classList.add("hidden");
+    document.getElementById("results-count-badge").classList.add("hidden");
+
+    const params = new URLSearchParams({ town, flat_type, year });
+    const [data, trend] = await Promise.all([
+      fetch(`/api/search?${params}`).then(r => r.json()),
+      fetch(`/api/trend?${new URLSearchParams({ town, flat_type })}`).then(r => r.json())
+    ]);
+
+    // Stats
+    if (data.stats) {
+      document.getElementById("stats-section").classList.remove("hidden");
+      document.getElementById("stat-count").textContent = data.total.toLocaleString();
+      document.getElementById("stat-avg").textContent   = fmtShort(data.stats.average);
+      document.getElementById("stat-min").textContent   = fmtShort(data.stats.minimum);
+      document.getElementById("stat-max").textContent   = fmtShort(data.stats.maximum);
+    }
+
+    // Trend chart
+    if (trend && trend.length > 1) {
+      document.getElementById("chart-card").classList.remove("hidden");
+      renderChart(trend);
+    }
+
+    // Results
+    if (data.results.length === 0) {
+      body.innerHTML = `
+        <div class="state-empty">
+          <div class="icon">🏘️</div>
+          <h3>No results found</h3>
+          <p>Try adjusting your filters — a different town, flat type, or year.</p>
+        </div>`;
+      return;
+    }
+
+    const badge = document.getElementById("results-count-badge");
+    badge.classList.remove("hidden");
+    badge.textContent = `Showing ${data.results.length} of ${data.total.toLocaleString()} transactions`;
+
+    let rows = data.results.map(r => `
+      <tr>
+        <td>${r.month}</td>
+        <td><strong>${r.town}</strong></td>
+        <td><span class="badge badge-type">${r.flat_type}</span></td>
+        <td class="storey-cell">${r.storey_range}</td>
+        <td class="area-cell">${r.floor_area_sqm} m²</td>
+        <td class="price-cell">${fmt(parseInt(r.resale_price))}</td>
+      </tr>`).join("");
+
+    body.innerHTML = `
+      <div class="table-wrap fade-in">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Town</th>
+              <th>Type</th>
+              <th>Storey</th>
+              <th>Area</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderChart(trend) {
+    const ctx = document.getElementById("trendChart");
+    if (trendChartInstance) trendChartInstance.destroy();
+
+    trendChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: trend.map(d => d.year),
+        datasets: [{
+          label: "Avg Resale Price",
+          data: trend.map(d => d.average),
+          borderColor: "#C0392B",
+          backgroundColor: "rgba(192,57,43,0.08)",
+          borderWidth: 2.5,
+          pointBackgroundColor: "#C0392B",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#1A1F36",
+            titleColor: "#fff",
+            bodyColor: "rgba(255,255,255,0.8)",
+            padding: 10,
+            callbacks: {
+              label: ctx => " " + fmt(ctx.raw)
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11 }, color: "#6B7280" }
+          },
+          y: {
+            grid: { color: "#F3F4F6" },
+            ticks: {
+              font: { size: 11 },
+              color: "#6B7280",
+              callback: v => fmtShort(v)
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
