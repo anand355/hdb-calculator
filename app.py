@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 def load_data():
     records = []
-    filepath = "data/sample_hdb.csv"
+    filepath = "data/ResaleflatpricesbasedonregistrationdatefromJan2017onwards.csv"
 
     if not os.path.exists(filepath):
         return []
